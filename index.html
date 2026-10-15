@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Test Print</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <!-- QZ Tray JS API 2.3.0 (vendored, defines window.qz). Must load before the app module. -->
+  <script src="vendor/qz-tray-2.3.0/qz-tray.js"></script>
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div>
+        <h1>Test Print</h1>
+        <p class="subtitle">ESC/POS receipt printer via QZ Tray &middot; Atom mPOS receipt layout</p>
+      </div>
+      <span id="status-pill" class="pill" data-state="disconnected" role="status" aria-live="polite">
+        <span class="dot" aria-hidden="true"></span>
+        <span id="status-text">Disconnected</span>
+      </span>
+    </div>
+  </header>
+
+  <div id="file-warning" class="banner" hidden>
+    This page must be served over http, not opened as a file. Run
+    <code>python3 -m http.server 8090</code> in the <code>web-browser-printer</code> folder and open
+    <a href="http://localhost:8090">http://localhost:8090</a>.
+  </div>
+
+  <main class="layout">
+    <div class="controls">
+      <section class="card" aria-labelledby="qz-heading">
+        <h2 id="qz-heading">QZ Tray</h2>
+        <div class="row">
+          <button id="connect-btn" class="btn btn-primary" type="button">Connect</button>
+          <button id="disconnect-btn" class="btn" type="button" disabled>Disconnect</button>
+        </div>
+        <div id="connect-help" class="callout" hidden>
+          <p><strong>Can't reach QZ Tray.</strong> Make sure it is installed and running, then click Connect.</p>
+          <ol>
+            <li>Install: <code>sudo installer -pkg ~/Downloads/qz-tray-2.3.0-arm64.pkg -target /</code></li>
+            <li>Start it: <code>open -a "QZ Tray"</code> (a QZ icon appears in the menu bar)</li>
+            <li>When QZ Tray asks whether to trust this site, click <strong>Allow</strong>.</li>
+          </ol>
+          <p>More help: <a href="README.md" target="_blank">README</a> &middot;
+            <a href="https://qz.io/download/" target="_blank" rel="noopener">qz.io/download</a></p>
+        </div>
+        <p id="security-mode" class="hint"></p>
+      </section>
+
+      <section class="card" aria-labelledby="printer-heading">
+        <h2 id="printer-heading">Printer</h2>
+        <label class="field-label" for="printer-select">Printer</label>
+        <div class="row">
+          <select id="printer-select" disabled>
+            <option value="">Connect to load printers</option>
+          </select>
+          <button id="refresh-btn" class="btn" type="button" disabled>Refresh</button>
+        </div>
+        <label class="check">
+          <input type="checkbox" id="force-raw">
+          <span>Force raw (bypass the printer driver)</span>
+        </label>
+        <p class="hint">Keep this on for CUPS queues that use a non-raw driver; the POS80 queue on this Mac uses
+          &ldquo;Generic PostScript Printer&rdquo;, which can garble ESC/POS.</p>
+        <div class="row actions">
+          <button id="print-btn" class="btn btn-primary" type="button" disabled>Print test receipt</button>
+          <button id="drawer-btn" class="btn" type="button" disabled>Open cash drawer</button>
+        </div>
+      </section>
+
+      <section class="card" aria-labelledby="merchant-heading">
+        <div class="card-head">
+          <h2 id="merchant-heading">Receipt header</h2>
+          <button id="reset-merchant" class="btn btn-link" type="button">Reset</button>
+        </div>
+        <form id="merchant-form" class="fields" autocomplete="off">
+          <label class="field">
+            <span class="field-label">Merchant name</span>
+            <input name="merchantName" type="text" maxlength="120" placeholder="Printer Test">
+          </label>
+          <label class="field">
+            <span class="field-label">Address <span class="optional">optional</span></span>
+            <input name="merchantAddress" type="text" maxlength="200">
+          </label>
+          <label class="field">
+            <span class="field-label">Phone <span class="optional">optional</span></span>
+            <input name="merchantPhone" type="text" maxlength="60">
+          </label>
+          <label class="field">
+            <span class="field-label">Email <span class="optional">optional</span></span>
+            <input name="merchantEmail" type="text" maxlength="120">
+          </label>
+        </form>
+      </section>
+    </div>
+
+    <section class="card preview-card" aria-labelledby="preview-heading">
+      <div class="card-head">
+        <h2 id="preview-heading">Preview</h2>
+        <span id="preview-meta" class="hint"></span>
+      </div>
+      <div class="paper-wrap">
+        <div id="paper" class="paper" role="img" aria-label="Receipt preview"></div>
+      </div>
+      <p class="hint">Decoded from the exact ESC/POS bytes sent to the printer, so it shows what the printer
+        receives. See the README for two layout quirks inherited from mPOS.</p>
+    </section>
+
+    <section class="card log-card" aria-labelledby="log-heading">
+      <div class="card-head">
+        <h2 id="log-heading">Log</h2>
+        <button id="clear-log" class="btn btn-link" type="button">Clear</button>
+      </div>
+      <ol id="log" class="log" aria-live="polite"></ol>
+    </section>
+  </main>
+
+  <script>
+    // ES modules don't load from file:// URLs, so this check lives in a classic script.
+    if (location.protocol === 'file:') {
+      document.getElementById('file-warning').hidden = false;
+    }
+  </script>
+</body>
+</html>
