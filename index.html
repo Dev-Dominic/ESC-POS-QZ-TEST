@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Test Print</title>
   <link rel="stylesheet" href="css/styles.css">
-  <!-- QZ Tray JS API 2.3.0 (vendored, defines window.qz). Must load before the app module. -->
-  <script src="vendor/qz-tray-2.3.0/qz-tray.js"></script>
-  <script type="module" src="js/app.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -22,12 +19,6 @@
       </span>
     </div>
   </header>
-
-  <div id="file-warning" class="banner" hidden>
-    This page must be served over http, not opened as a file. Run
-    <code>python3 -m http.server 8090</code> in the <code>web-browser-printer</code> folder and open
-    <a href="http://localhost:8090">http://localhost:8090</a>.
-  </div>
 
   <main class="layout">
     <div class="controls">
@@ -118,11 +109,12 @@
     </section>
   </main>
 
-  <script>
-    // ES modules don't load from file:// URLs, so this check lives in a classic script.
-    if (location.protocol === 'file:') {
-      document.getElementById('file-warning').hidden = false;
-    }
-  </script>
+  <!-- Classic scripts (no ES modules) so the page also works opened straight from disk. Order matters. -->
+  <script src="vendor/qz-tray-2.3.0/qz-tray.js"></script>
+  <script src="vendor/receipt-printer-encoder-3.0.3/receipt-printer-encoder.js"></script>
+  <script src="js/signing.js"></script>
+  <script src="js/receipt.js"></script>
+  <script src="js/qz-client.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

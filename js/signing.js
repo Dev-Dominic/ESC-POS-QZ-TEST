@@ -14,7 +14,7 @@
  *
  * Nothing else needs to change: js/qz-client.js reads this file before connecting.
  */
-export const signingConfig = {
+window.signingConfig = {
   enabled: false,
 
   /** Inline PEM text ("-----BEGIN CERTIFICATE-----..."). Takes precedence over certificateUrl. */

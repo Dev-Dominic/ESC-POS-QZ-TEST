@@ -2,17 +2,15 @@
 
 A standalone "Test Print" page that prints the Atom mPOS test receipt to an ESC/POS
 thermal receipt printer from the browser, through [QZ Tray](https://qz.io).
-Plain HTML + vanilla JS (ES modules). No build step, and the libraries are vendored, so it works offline.
+Plain HTML + vanilla JS (classic scripts, no ES modules). No build step, and the libraries are vendored, so it works offline.
 
 ## Run it
 
-```sh
-cd web-browser-printer
-python3 -m http.server 8090
-```
+Just open `index.html` in a browser (double-click it). There is no server or build step: the app uses classic
+`<script>` tags, not ES modules, so it works from `file://`. Serving it over http also works.
 
-Open <http://localhost:8090>. Serve it over http; opening `index.html` as a file does not work,
-because browsers don't load ES modules from `file://`.
+With `file://` the page origin is `null`; QZ Tray may ask you to Allow on each connection, and signing
+(below) may not work.
 
 ## Install QZ Tray (once)
 
@@ -111,7 +109,7 @@ If signing is enabled but misconfigured, the page logs a warning and falls back 
 ## Files
 
 ```
-index.html                 page markup; loads vendor/qz-tray first, then js/app.js as a module
+index.html                 page markup; loads vendor/qz-tray, the encoder, then js/*.js as classic scripts (order matters)
 css/styles.css             all styles (light/dark, responsive)
 js/app.js                  UI: connection, printer list, preview, print buttons, log
 js/receipt.js              receipt line building (mPOS port), ESC/POS encoding, byte decoder for the preview
@@ -125,7 +123,7 @@ vendor/                    third-party libraries (see below)
 | Library | Version | File | Source | sha256 | License |
 | --- | --- | --- | --- | --- | --- |
 | qz-tray (QZ Tray JS API) | 2.3.0 | `vendor/qz-tray-2.3.0/qz-tray.js` | `https://cdn.jsdelivr.net/npm/qz-tray@2.3.0/qz-tray.js` (same as the npm tarball, integrity checked) | `2516fe196e7b7db0ae10a6c90f6210f08d8bc52a65d203d70795637d2c4340be` | LGPL-2.1-only (file header) |
-| @point-of-sale/receipt-printer-encoder | 3.0.3 | `vendor/receipt-printer-encoder-3.0.3/receipt-printer-encoder.esm.js` (+ `.map`, `LICENSE`) | `https://cdn.jsdelivr.net/npm/@point-of-sale/receipt-printer-encoder@3.0.3/dist/receipt-printer-encoder.esm.js` | `7402ce3b105f071a476ba6f284622e762c8c537447d0e7ecf5ea79b89af979f4` | MIT |
+| @point-of-sale/receipt-printer-encoder | 3.0.3 | `vendor/receipt-printer-encoder-3.0.3/receipt-printer-encoder.esm.js` (+ `.map`, `LICENSE`); `receipt-printer-encoder.js` is the same code wrapped as a classic script (`export` replaced by `window.ReceiptPrinterEncoder`) | `https://cdn.jsdelivr.net/npm/@point-of-sale/receipt-printer-encoder@3.0.3/dist/receipt-printer-encoder.esm.js` | `7402ce3b105f071a476ba6f284622e762c8c537447d0e7ecf5ea79b89af979f4` | MIT |
 
 Notes:
 

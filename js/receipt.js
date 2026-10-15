@@ -14,38 +14,41 @@
  * The on-screen preview is produced by decoding the exact bytes that are printed
  * (see decodeEscPos), so preview and print cannot drift apart.
  */
-import ReceiptPrinterEncoder from '../vendor/receipt-printer-encoder-3.0.3/receipt-printer-encoder.esm.js';
+(function () {
+'use strict';
 
-export const RECEIPT_LINE_WIDTH = 44;
-export const RECEIPT_DIVIDER = '-'.repeat(RECEIPT_LINE_WIDTH);
-export const ENCODER_OPTIONS = Object.freeze({ columns: 44, feedBeforeCut: 5, imageMode: 'raster' });
+const ReceiptPrinterEncoder = window.ReceiptPrinterEncoder;
+
+const RECEIPT_LINE_WIDTH = 44;
+const RECEIPT_DIVIDER = '-'.repeat(RECEIPT_LINE_WIDTH);
+const ENCODER_OPTIONS = Object.freeze({ columns: 44, feedBeforeCut: 5, imageMode: 'raster' });
 
 /** ESC p 0 25 250: pulse drawer kick pin 2 for 50 ms on / 500 ms off. */
-export const CASH_DRAWER_KICK = Uint8Array.of(0x1b, 0x70, 0x00, 0x19, 0xfa);
+const CASH_DRAWER_KICK = Uint8Array.of(0x1b, 0x70, 0x00, 0x19, 0xfa);
 
-export const DEFAULT_MERCHANT_NAME = 'Printer Test';
+const DEFAULT_MERCHANT_NAME = 'Printer Test';
 
 // ---------------------------------------------------------------------------
 // Helpers (same semantics as mPOS)
 // ---------------------------------------------------------------------------
 
-export function formatCurrency(amount) {
+function formatCurrency(amount) {
   return `$${amount.toFixed(2)}`;
 }
 
 /** Replace anything outside printable ASCII (0x20-0x7E) with a space, collapse whitespace, trim. */
-export function sanitize(value) {
+function sanitize(value) {
   return String(value).replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
-export function truncate(value, maxLength) {
+function truncate(value, maxLength) {
   if (value.length <= maxLength) {
     return value;
   }
   return `${value.slice(0, Math.max(0, maxLength - 3))}...`;
 }
 
-export function createAlignedLine(left, right, width = RECEIPT_LINE_WIDTH) {
+function createAlignedLine(left, right, width = RECEIPT_LINE_WIDTH) {
   if (!right) return left;
   const availableLeft = Math.max(0, width - right.length - 1);
   const trimmedLeft = truncate(left, availableLeft);
@@ -54,7 +57,7 @@ export function createAlignedLine(left, right, width = RECEIPT_LINE_WIDTH) {
 }
 
 /** e.g. "10/14/2026, 01:43 PM" (newer ICU emits U+202F before AM/PM; sanitize() turns it into a space). */
-export function formatReceiptDate(date) {
+function formatReceiptDate(date) {
   return date.toLocaleString('en-US', {
     hour12: true,
     year: 'numeric',
@@ -182,7 +185,7 @@ function appendFooter(encoder) {
 // ---------------------------------------------------------------------------
 
 /** Same as mPOS buildOrderReceiptBytes (minus the logo header), synchronous. */
-export function buildOrderReceiptBytes(payload) {
+function buildOrderReceiptBytes(payload) {
   const encoder = new ReceiptPrinterEncoder({ ...ENCODER_OPTIONS });
   encoder.initialize();
 
@@ -205,7 +208,7 @@ function optional(value) {
  * The mPOS test receipt payload (buildTestReceiptBytes), with the merchant
  * header fields taken from the page's form. Empty fields are omitted, as in mPOS.
  */
-export function buildTestReceiptPayload(merchant = {}, createdAt = new Date()) {
+function buildTestReceiptPayload(merchant = {}, createdAt = new Date()) {
   return {
     merchantName: optional(merchant.merchantName) ?? DEFAULT_MERCHANT_NAME,
     merchantAddress: optional(merchant.merchantAddress),
@@ -229,7 +232,7 @@ export function buildTestReceiptPayload(merchant = {}, createdAt = new Date()) {
   };
 }
 
-export function buildTestReceiptBytes(merchant, createdAt) {
+function buildTestReceiptBytes(merchant, createdAt) {
   return buildOrderReceiptBytes(buildTestReceiptPayload(merchant, createdAt));
 }
 
@@ -237,7 +240,7 @@ export function buildTestReceiptBytes(merchant, createdAt) {
 // Byte utilities
 // ---------------------------------------------------------------------------
 
-export function bytesToBase64(bytes) {
+function bytesToBase64(bytes) {
   let binary = '';
   const chunkSize = 0x8000;
   for (let i = 0; i < bytes.length; i += chunkSize) {
@@ -254,7 +257,7 @@ export function bytesToBase64(bytes) {
  * Returns { rows, warnings } where each row is
  *   { type: 'line', segments: [{ text, bold }], align }  or  { type: 'cut' } or { type: 'drawer' }.
  */
-export function decodeEscPos(bytes) {
+function decodeEscPos(bytes) {
   const rows = [];
   const warnings = [];
   let segments = [];
@@ -365,13 +368,16 @@ export function decodeEscPos(bytes) {
  * Spaces to prepend for printer-side alignment (ESC a). The encoder pads lines
  * itself, so this is normally 0.
  */
-export function rowPadding(row, columns = RECEIPT_LINE_WIDTH) {
+function rowPadding(row, columns = RECEIPT_LINE_WIDTH) {
   const length = row.segments.reduce((sum, s) => sum + s.text.length, 0);
   if (row.align === 'left' || length >= columns) return 0;
   return row.align === 'center' ? (columns - length) >> 1 : columns - length;
 }
 
 /** Plain text of a decoded row, as it lands on paper. */
-export function rowText(row, columns = RECEIPT_LINE_WIDTH) {
+function rowText(row, columns = RECEIPT_LINE_WIDTH) {
   return ' '.repeat(rowPadding(row, columns)) + row.segments.map((s) => s.text).join('');
 }
+
+  window.Receipt = { RECEIPT_LINE_WIDTH, RECEIPT_DIVIDER, ENCODER_OPTIONS, CASH_DRAWER_KICK, DEFAULT_MERCHANT_NAME, formatCurrency, sanitize, truncate, createAlignedLine, formatReceiptDate, buildOrderReceiptBytes, buildTestReceiptPayload, buildTestReceiptBytes, bytesToBase64, decodeEscPos, rowPadding, rowText };
+})();

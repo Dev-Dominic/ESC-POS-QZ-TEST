@@ -5,7 +5,10 @@
  * <script> before the app module. QZ Tray itself listens on wss://localhost:8181
  * (https pages) or ws://localhost:8182 (http pages); qz-tray.js picks the right one.
  */
-import { bytesToBase64 } from './receipt.js';
+(function () {
+'use strict';
+
+const { bytesToBase64 } = window.Receipt;
 
 function api() {
   const qz = globalThis.qz;
@@ -15,7 +18,7 @@ function api() {
   return qz;
 }
 
-export function isLibraryLoaded() {
+function isLibraryLoaded() {
   return typeof globalThis.qz !== 'undefined';
 }
 
@@ -26,7 +29,7 @@ export function isLibraryLoaded() {
  * @param {object} config  see js/signing.js
  * @param {(message: string) => void} [onWarning]
  */
-export function configureSecurity(config, onWarning = () => {}) {
+function configureSecurity(config, onWarning = () => {}) {
   const qz = api();
   const wantsSigning = Boolean(config && config.enabled);
   const hasCertificate = Boolean(config && (config.certificate || config.certificateUrl));
@@ -72,18 +75,18 @@ export function configureSecurity(config, onWarning = () => {}) {
 }
 
 /** Register connection lifecycle callbacks (replaces any previous ones). */
-export function onConnectionEvents({ onClosed, onError } = {}) {
+function onConnectionEvents({ onClosed, onError } = {}) {
   const qz = api();
   if (onClosed) qz.websocket.setClosedCallbacks(onClosed);
   if (onError) qz.websocket.setErrorCallbacks(onError);
 }
 
-export function isConnected() {
+function isConnected() {
   return isLibraryLoaded() && globalThis.qz.websocket.isActive();
 }
 
 /** Connect (no-op if already connected). Resolves with the QZ Tray version string. */
-export async function connect() {
+async function connect() {
   const qz = api();
   if (!qz.websocket.isActive()) {
     await qz.websocket.connect({ retries: 0, delay: 0 });
@@ -91,7 +94,7 @@ export async function connect() {
   return qz.api.getVersion();
 }
 
-export async function disconnect() {
+async function disconnect() {
   const qz = api();
   if (qz.websocket.isActive()) {
     await qz.websocket.disconnect();
@@ -99,12 +102,12 @@ export async function disconnect() {
 }
 
 /** All printer names QZ Tray can see. */
-export async function listPrinters() {
+async function listPrinters() {
   const result = await api().printers.find();
   return Array.isArray(result) ? result : [result].filter(Boolean);
 }
 
-export async function getDefaultPrinter() {
+async function getDefaultPrinter() {
   try {
     return (await api().printers.getDefault()) || null;
   } catch {
@@ -122,9 +125,12 @@ export async function getDefaultPrinter() {
  *                                      Needed when the CUPS queue has a non-raw driver such as "Generic PostScript Printer".
  * @param {string} [options.jobName]
  */
-export function printRaw(printerName, bytes, { forceRaw = false, jobName = 'Test print' } = {}) {
+function printRaw(printerName, bytes, { forceRaw = false, jobName = 'Test print' } = {}) {
   const qz = api();
   const config = qz.configs.create(printerName, { forceRaw, jobName });
   const data = [{ type: 'raw', format: 'command', flavor: 'base64', data: bytesToBase64(bytes) }];
   return qz.print(config, data);
 }
+
+  window.QzClient = { isLibraryLoaded, configureSecurity, onConnectionEvents, isConnected, connect, disconnect, listPrinters, getDefaultPrinter, printRaw };
+})();

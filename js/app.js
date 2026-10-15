@@ -2,9 +2,12 @@
  * UI for the Test Print page: QZ Tray connection, printer selection,
  * receipt preview, printing and the log panel.
  */
-import { signingConfig } from './signing.js';
-import * as qzClient from './qz-client.js';
-import {
+(function () {
+'use strict';
+const signingConfig = window.signingConfig;
+
+const qzClient = window.QzClient;
+const {
   CASH_DRAWER_KICK,
   DEFAULT_MERCHANT_NAME,
   RECEIPT_LINE_WIDTH,
@@ -12,7 +15,7 @@ import {
   buildTestReceiptPayload,
   decodeEscPos,
   rowPadding,
-} from './receipt.js';
+} = window.Receipt;
 
 const STORAGE_KEYS = {
   printer: 'web-browser-printer.printer',
@@ -420,3 +423,5 @@ function init() {
 }
 
 init();
+
+})();
